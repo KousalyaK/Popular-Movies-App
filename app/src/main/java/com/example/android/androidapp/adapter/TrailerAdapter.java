@@ -73,7 +73,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerV
 
         @Override
         public void onClick(View v) {
-
+            onItemClickListener.onItemClick(v, getAdapterPosition());
         }
     }
 }

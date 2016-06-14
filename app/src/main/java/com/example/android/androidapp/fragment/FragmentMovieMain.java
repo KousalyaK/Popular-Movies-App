@@ -1,8 +1,10 @@
 package com.example.android.androidapp.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -32,14 +34,6 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentMovieMain.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentMovieMain#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentMovieMain extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -64,12 +58,6 @@ public class FragmentMovieMain extends Fragment {
     MovieGridAdapter movieGridAdapter;
     private OnMovieClickListener onMovieClickListener;
     MovieModel mMovieModel;
-
-
-
-
-
-
 
 
     public FragmentMovieMain() {
@@ -117,9 +105,7 @@ public class FragmentMovieMain extends Fragment {
         movieGridAdapter = new MovieGridAdapter(getActivity(), modelsList, new OnItemClickListener() {
             @Override
             public void onItemClick(View itemView, int itemPosition) {
-                Log.d("GetItem","onclick" + movieGridAdapter.getItem(itemPosition));
                 Results results = movieGridAdapter.getItem(itemPosition);
-                Log.d("new",""+results.getTitle());
 
                 if( modelsList != null ) {
                     onMovieClickListener.onMovieClick(results,true);
@@ -198,5 +184,24 @@ public class FragmentMovieMain extends Fragment {
             }
         });
     }
+
+//    private void shareTrailer() {
+//        if( mTrailerResultList != null && mTrailerResultList.size() > 0 ) {
+//            Intent sendIntent = new Intent();
+//            sendIntent.setAction(Intent.ACTION_SEND);
+//            sendIntent.putExtra(Intent.EXTRA_TEXT,
+//                    "Movie Night :\n"
+//                            + mMovieResult.getOriginalTitle()
+//                            +" Trailer : \n"
+//                            + "http://www.youtube.com/watch?v=" + mTrailerResultList.get(0).getKey());
+//            sendIntent.setType("text/plain");
+//            startActivity(sendIntent);
+//        }
+//        else {
+//            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.no_trailers_to_share, Snackbar.LENGTH_SHORT).show();
+//        }
+//
+//    }
+
 
 }

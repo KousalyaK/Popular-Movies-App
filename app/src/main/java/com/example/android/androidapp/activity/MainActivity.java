@@ -45,32 +45,12 @@ public class MainActivity extends AppCompatActivity implements FragmentMovieMain
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 } else {
                     getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                     setTitle(savedInstanceState.getString(MOVIE_TITLE, getResources().getString(R.string.app_name)));
-
+                    loadFragmentGridMain();
                 }
-
-
             }
         }
-
-
-       // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-//        setTitle("Popular Movie");
-//
-//        Configuration config = getResources().getConfiguration();
-//
-//        if(config.orientation == 1){
-//            mTowPane = false;
-//        } else {
-//            mTowPane = true;
-//        }
-//
-//        if(mTowPane){
-//            loadTwoPaneFragment();
-//        } else  {
-//            loadFragmentGridMain();
-//        }
 
     }
 
@@ -123,18 +103,28 @@ public class MainActivity extends AppCompatActivity implements FragmentMovieMain
         }
         mFragmentTransaction.commit();
 
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        setTitle(R.string.app_name);
     }
 
-    public void loadTwoPaneFragment(){
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+            if( mTowPane ) {
+                super.onBackPressed();
+            }
+            else {
+                if( !getTitle().toString().equals(getResources().getString(R.string.app_name)) ) {
+                    loadFragmentGridMain();
+                }
+                else {
+                    super.onBackPressed();
+                }
+            }
 
-        mFragmentTransaction = getSupportFragmentManager().beginTransaction();
-        mFragment = getSupportFragmentManager().findFragmentByTag(FragmentMovieDetail.class.getSimpleName());
-        if( mFragment == null ) {
-            mFragment = new FragmentMovieDetail();
+
         }
-        mFragmentTransaction.replace(R.id.moviesDetailFrameLayout, mFragment, FragmentMovieMain.class.getSimpleName());
-        mFragmentTransaction.commit();
-    }
+
 
     @Override
     public void onMovieClick(Results movieResult, boolean isFavorite) {
@@ -152,10 +142,37 @@ public class MainActivity extends AppCompatActivity implements FragmentMovieMain
         }
         mFragmentTransaction.commit();
 
+        if( !mTowPane ) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            setTitle(movieResult.getTitle());
+        }
+
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                mTowPane = false;
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+                mTowPane = true;
+        }
     }
 
     @Override
     public void loadDefaultMovie(Results movieResult, boolean isFavorite) {
+        if( mTowPane ) {
+            Bundle bundle = new Bundle();
+            bundle.putParcelable( MovieModel.class.getSimpleName(), movieResult );
+            bundle.putBoolean("IS_FAV", isFavorite);
+            mFragment = new FragmentMovieDetail();
+            mFragment.setArguments( bundle );
+            mFragmentTransaction = getSupportFragmentManager().beginTransaction();
+            mFragmentTransaction.replace(R.id.moviesDetailFrameLayout, mFragment,  FragmentMovieDetail.class.getSimpleName());
+            mFragmentTransaction.commit();
+        }
+
 
     }
 
@@ -173,4 +190,5 @@ public class MainActivity extends AppCompatActivity implements FragmentMovieMain
     public void storeFavorites(MovieModel favoriteMovieModel) {
 
     }
+
 }

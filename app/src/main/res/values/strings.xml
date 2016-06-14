@@ -14,4 +14,5 @@
     <string name="no_trailers">No Trailer</string>
     <string name="reviews_text">Review</string>
     <string name="no_reviews">No Review</string>
+    <string name="no_internet">No Internet Connected</string>
 </resources>

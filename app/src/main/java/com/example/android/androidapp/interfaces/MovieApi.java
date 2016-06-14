@@ -1,6 +1,7 @@
 package com.example.android.androidapp.interfaces;
 
 import com.example.android.androidapp.models.MovieModel;
+import com.example.android.androidapp.models.ReviewModel;
 import com.example.android.androidapp.models.TrailerResults;
 import com.example.android.androidapp.models.TrailerViedoModel;
 
@@ -22,12 +23,9 @@ public interface MovieApi {
 
     @GET("/movie/{id}/videos")
     void fetchTrailers( @Path("id") String movieId, Callback<TrailerViedoModel> callback );
-//
-//    @GET("/movie/{id}/reviews")
-//    void getReviews( @Path("id") String movieId, Callback<ReviewsModel> callback );
 
-
-
+    @GET("/movie/{id}/reviews")
+    void getReviews( @Path("id") String movieId, Callback<ReviewModel> callback );
 
 
 }

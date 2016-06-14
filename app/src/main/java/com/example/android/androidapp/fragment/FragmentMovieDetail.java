@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatRatingBar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -25,9 +26,11 @@ import com.example.android.androidapp.generator.MovieAPIGenerator;
 import com.example.android.androidapp.interfaces.MovieApi;
 import com.example.android.androidapp.interfaces.OnItemClickListener;
 import com.example.android.androidapp.models.Results;
+import com.example.android.androidapp.models.ReviewModel;
 import com.example.android.androidapp.models.TrailerResults;
 import com.example.android.androidapp.models.TrailerViedoModel;
 import com.example.android.androidapp.models.TrailersResultList;
+import com.example.android.androidapp.utils.InternetUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -84,8 +87,6 @@ public class FragmentMovieDetail extends Fragment {
     View synopsisDividerView;
     @Bind(R.id.trailerTitleTextView)
     TextView trailerTitleTextView;
-    @Bind(R.id.noTrailersTextView)
-    TextView noTrailersTextView;
     @Bind(R.id.movieTrailerRecyclerView)
     RecyclerView mMovieTrailerRecyclerView;
     @Bind(R.id.reviewTitleTextView)
@@ -106,15 +107,13 @@ public class FragmentMovieDetail extends Fragment {
     private OnFragmentInteractionListenerDetails mListener;
     public Results results;
     MovieApi movieApi;
-    public ArrayList<TrailersResultList> trailerList;
+    ArrayList<TrailersResultList> trailerList;
     TrailerAdapter mTrailerAdapter;
+    ArrayList<TrailersResultList> tList;
 
     public FragmentMovieDetail() {
         // Required empty public constructor
     }
-
-
-
     public static FragmentMovieDetail newInstance(String param1, String param2) {
         FragmentMovieDetail fragment = new FragmentMovieDetail();
         Bundle args = new Bundle();
@@ -134,11 +133,11 @@ public class FragmentMovieDetail extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             results = savedInstanceState.getParcelable("MOVIE_MODEL");
         }
-    }
 
+    }
 
 
     @Override
@@ -150,39 +149,31 @@ public class FragmentMovieDetail extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
         // Inflate the layout for this fragment
-        ButterKnife.bind(this,rootView);
+        View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
+
+        ButterKnife.bind(this, rootView);
+        trailerList = new ArrayList<>();
+        tList = new ArrayList<>();
         movieApi = MovieAPIGenerator.createService(MovieApi.class);
         results = new Results();
-        trailerList = new ArrayList<>();
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
-
-        if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             results = savedInstanceState.getParcelable("MOVIE_MODEL");
         } else {
             Bundle bundle = getArguments();
-            if(bundle != null) {
+            if (bundle != null) {
                 results = bundle.getParcelable("OnclickDetails");
                 Log.d("Results", "" + results.toString());
-                setUPView();
-
             }
-        }
-        getMoviesTrailers();
-        if(mTrailerAdapter == null) {
-            mTrailerAdapter = new TrailerAdapter(getActivity(), trailerList, new OnItemClickListener() {
-                @Override
-                public void onItemClick(View itemView, int itemPosition) {
-                    youtubeVideo(trailerList.get(itemPosition).getKey());
-                }
-            });
 
         }
-        mMovieTrailerRecyclerView.setLayoutManager(linearLayoutManager);
-        mMovieTrailerRecyclerView.setAdapter(mTrailerAdapter);
+        setUPView();
+        getReviews();
+        getMoviesTrailers();
+        Log.d("Size", "" + trailerList.size());
+
+
 
         return rootView;
     }
@@ -223,9 +214,9 @@ public class FragmentMovieDetail extends Fragment {
     }
 
 
-    public void setUPView(){
-        if(results != null) {
-            Log.d("Inside the setUPView", ""+results.toString() + " : " + results.getBackdrop_path());
+    public void setUPView() {
+        if (results != null) {
+            Log.d("Inside the setUPView", "" + results.toString() + " : " + results.getBackdrop_path());
             Picasso.with(getActivity()).load(MovieAPIGenerator.IMAGE_URL + results.getBackdrop_path()).into(movieImageView);
             Picasso.with(getActivity()).load(MovieAPIGenerator.IMAGE_URL + results.getPoster_path()).into(moviePosterImageView);
             titleTextView.setText(results.getTitle());
@@ -236,24 +227,37 @@ public class FragmentMovieDetail extends Fragment {
         }
     }
 
-    public void getMoviesTrailers(){
-
+    public void getMoviesTrailers() {
+        if (!InternetUtils.isConnected(getActivity())) {
+            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.no_internet, Snackbar.LENGTH_SHORT).show();
+            return;
+        } else {
+            mMovieTrailerRecyclerView.setVisibility(View.VISIBLE);
+           // mNoReviewsTextView.setVisibility(View.GONE);
+           // mNoTrailersTextView.setVisibility(View.GONE);
+        }
         movieApi.fetchTrailers(results.getId(), new Callback<TrailerViedoModel>() {
             @Override
             public void success(TrailerViedoModel trailerResults, Response response) {
-                Log.d("TrailerResults : ", ""+ trailerResults.toString());
+                Log.d("TrailerResults : ", "" + trailerResults.toString());
                 trailerList.addAll(trailerResults.getResults());
+                getTrailers(trailerResults);
+                mTrailerAdapter.notifyDataSetChanged();
+                //Log.d("List : ", "" + trailerList.toString());
+
             }
 
             @Override
             public void failure(RetrofitError error) {
                 error.printStackTrace();
-                Log.d("RetrofitError : ", ""+ error.getMessage());
+                Log.d("RetrofitError : ", "" + error.getMessage());
             }
         });
+
+
     }
 
-   //http://stackoverflow.com/questions/574195/android-youtube-app-play-video-intent
+    //http://stackoverflow.com/questions/574195/android-youtube-app-play-video-intent
     public void youtubeVideo(String id) {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + id));
@@ -261,6 +265,47 @@ public class FragmentMovieDetail extends Fragment {
         } catch (ActivityNotFoundException ex) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + id));
             startActivity(intent);
+        }
+    }
+
+    public void getTrailers(TrailerViedoModel trailerViedoModel){
+        tList = trailerViedoModel.getResults();
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
+        mMovieTrailerRecyclerView.setLayoutManager(linearLayoutManager);
+        mMovieTrailerRecyclerView.setHasFixedSize(true);
+
+        if (mTrailerAdapter == null) {
+            mTrailerAdapter = new TrailerAdapter(getActivity(), tList, new OnItemClickListener() {
+                @Override
+                public void onItemClick(View itemView, int itemPosition) {
+                    youtubeVideo(tList.get(itemPosition).getKey());
+                }
+            });
+
+        }
+        mTrailerAdapter.notifyDataSetChanged();
+        mMovieTrailerRecyclerView.setAdapter(mTrailerAdapter);
+
+    }
+
+    public void getReviews(){
+        if(!InternetUtils.isConnected(getActivity())){
+            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.no_internet, Snackbar.LENGTH_SHORT).show();
+            return;
+        } else {
+
+            movieApi.getReviews(results.getId(), new Callback<ReviewModel>() {
+                @Override
+                public void success(ReviewModel reviewModel, Response response) {
+                    Log.d("ReviewModel : ", ""+reviewModel.toString());
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    Log.d("RetrofitError : ", ""+error.getMessage());
+                }
+            });
+
         }
     }
 }
